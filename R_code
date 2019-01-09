@@ -76,7 +76,8 @@ summary(d3)
 
 ## Adult Females: Reproductive State Model 
 
-repro = read.csv("~/")
+#read data
+repro = read.csv("~/Repro_state_injury.csv", stringsAsFactors = FALSE)
 
 # summarize
 table(repro$INJ) #93
