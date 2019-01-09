@@ -1,1 +1,100 @@
-## Soon ##
+### Injury/death in geladas & takeovers ###
+
+# read data
+injury = read.csv("~/Injury_death_2018.csv", stringsAsFactors = FALSE)
+
+# summarize
+table(injury$INJ) ## 139 inj, 13812 noninj
+table(injury$DEA) ## 131 inj, 12820 noninj
+table(injury$DINJ) #267 bodily harm, 13684 without
+length(unique(injury$ID)) #413
+table(injury$Sex, injury$INJ)
+nrow(injury) #13951
+length(unique(injury$Unit)) #35
+table(injury$INJ, injury$AgeCat, injury$Sex)
+table(injury$AgeCat) # I: 2917, J: 4570, A: 6464
+
+# model 1: injury only
+library(lme4)
+mod1 = glmer(INJ ~ to_yn*AgeCat + (1|ID), data=injury, family=binomial, na.action = na.fail)
+summary(mod1)
+
+## model selection
+library(MuMIn)
+dredge1 <- dredge(mod1)
+get.models(dredge1, subset=delta<2)
+mod.average.m1 <- model.avg(get.models(dredge1, subset=delta<2))
+mod.average.m1_all <- model.avg(get.models(dredge1, subset = TRUE)) # average across all models, not just subset 
+summary(mod.average.m1_all)
+summary(mod.average.m1)
+
+# model 2: injury + death
+mod2 = glmer(DINJ~ to_yn*AgeCat +(1|ID), data=mod2, family=binomial)
+summary(mod2)
+
+# model selection
+library(MuMIn)
+options(na.action = "na.fail")
+dredge2 <- dredge(mod2)
+get.models(dredge2, subset=delta<2)
+mod.average.m2 <- model.avg(get.models(dredge2, subset=delta<2))
+mod.average.m2_all <- model.avg(get.models(dredge2, subset = TRUE)) # average across all models, not just subset 
+
+# model 3: death only
+mod3 = glmer(DEA ~ to_yn*AgeCat + (1|ID), data=mod3, na.action=na.fail, family=binomial)
+summary(mod3)
+
+# model selection
+library(MuMIn)
+dredge3 <- dredge(mod3)
+get.models(dredge3, subset=delta<2)
+mod.average.m3 <- model.avg(get.models(dredge3, subset=delta<2))
+mod.average.m3_all <- model.avg(get.models(dredge3, subset = TRUE)) # average across all models, not just subset 
+summary(mod.average.m3_all)
+summary(mod.average.m3)
+
+### Infants only analyses ###
+# subset to just infants
+infants = injury[injury$AgeCat == "I", ]
+
+# reformat
+infants$INJ = as.numeric(infants$INJ)
+infants$DEA = as.numeric(infants$DEA)
+infants$DINJ = as.numeric(infants$DINJ)
+
+# linear model to accommodate smaller dataset: injury only
+d1 = lm(INJ ~ to_yn, data=infants, na.action=na.fail)
+summary(d1)
+
+# death only
+d2 = lm(DEA ~ to_yn, data=infants, na.action=na.fail)
+summary(d2)
+
+# death + injury
+d3 = lm(DINJ ~ to_yn, data=infants, na.action=na.fail)
+summary(d3)
+
+## Adult Females: Reproductive State Model 
+
+repro = read.csv("~/")
+
+# summarize
+table(repro$INJ) #93
+table(repro$INJ, repro$I.State) #P: 10/1144; L: 45/2637, C: 38/1559
+table(repro$I.State, repro$to_yn) #P: 61/1093; L: 163/2519, C: 401/1196
+nrow(repro) #5433
+length(unique(repro$Individual)) #133
+
+## glmm
+library(lme4)
+repro_1 <- glmer(INJ ~ to_yn*I.State + (1|ID), data=repro, na.action=na.fail, family=binomial)
+summary(repro_1)
+
+## model selection
+library(MuMIn)
+dredge_repro <- dredge(repro_1)
+get.models(dredge_repro, subset=delta<2)
+mod.average.repro <- model.avg(get.models(dredge_repro, subset=delta<2))
+mod.average.all.repro <- model.avg(get.models(dredge_repro, subset = TRUE)) # average across all models, not just subset 
+summary(mod.average.all.repro)
+summary(mod.average.repro)
